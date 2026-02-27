@@ -5,45 +5,14 @@ import pickle
 import random
 import time
 
-import aioboto3
+import aiohttp
 from omegaconf import OmegaConf
 from tqdm import tqdm
 
 from source.helper.Helper import Helper
+from source.llm import llm_predict, process_llm_predict
 
 logging.basicConfig(level=logging.INFO)
-
-
-async def llm_predict(client, request):
-    try:
-        response = await asyncio.wait_for(
-            client.invoke_model(
-                body=json.dumps(request["body"]),
-                modelId=request["modelId"],
-                accept="application/json",
-                contentType="application/json"
-            ),
-            timeout=request["timeout"]
-        )
-        response_body = await response.get("body").read()
-        request["response"] = json.loads(response_body)["generation"]
-        request["status"] = "success"
-
-    except asyncio.TimeoutError:
-        request["status"] = "failure"
-
-    except Exception as e:
-        request["status"] = "failure"
-        logging.error("Exception while predicting description", exc_info=e)
-        time.sleep(2)
-
-    return request
-
-
-async def process_llm_predict(client, requests):
-    tasks = [llm_predict(client, request) for request in requests]
-    processed_requests = await asyncio.gather(*tasks)
-    return processed_requests
 
 
 class LabelDescriptionHelper(Helper):
@@ -51,7 +20,8 @@ class LabelDescriptionHelper(Helper):
     def __init__(self, params):
         super(LabelDescriptionHelper, self).__init__()
         self.params = params
-        self.session = aioboto3.Session()
+        self.base_url = params.llm.server.base_url
+        self.model_name = params.llm.server.model
         self.prompt = self._load_prompt("optimized_prompt")
         logging.basicConfig(level=logging.INFO)
 
@@ -144,7 +114,7 @@ class LabelDescriptionHelper(Helper):
                         "temperature": self.params.llm.prompt_opt.temperature,
                         "top_p": self.params.llm.prompt_opt.top_p
                     },
-                    "modelId": self.params.llm.prompt_opt.model,
+                    "model": self.model_name,
                     "timeout": self.params.llm.prompt_opt.timeout
                 }
                 #     {
@@ -161,12 +131,13 @@ class LabelDescriptionHelper(Helper):
 
     async def _process_requests(self, prompts_requests):
         labels_descriptions = {}
-        async with self.session.client('bedrock-runtime') as bedrock_client:
+        async with aiohttp.ClientSession() as http_session:
             with tqdm(total=prompts_requests.qsize(), desc=f"Requesting") as pbar:
                 while not prompts_requests.empty():  # Process the queue in batches until its empty
                     batched_requests = await self._get_batched_requests(prompts_requests)
                     processed_requests = await process_llm_predict(
-                        bedrock_client,
+                        http_session,
+                        self.base_url,
                         batched_requests
                     )
                     num_failures = 0

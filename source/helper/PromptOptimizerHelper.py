@@ -1,49 +1,16 @@
 import asyncio
-import json
 import logging
 import random
 import re
-import time
 
-import aioboto3
+import aiohttp
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
 
 from source.helper.Helper import Helper
-
-
-async def llm_predict(client, request):
-    try:
-        response = await asyncio.wait_for(
-            client.invoke_model(
-                body=json.dumps(request["body"]),
-                modelId=request["modelId"],
-                accept="application/json",
-                contentType="application/json"
-            ),
-            timeout=request["timeout"]
-        )
-        response_body = await response.get("body").read()
-        request["response"] = json.loads(response_body)["generation"]
-        request["status"] = "success"
-
-    except asyncio.TimeoutError:
-        request["status"] = "failure"
-
-    except Exception as e:
-        request["status"] = "failure"
-        logging.error("Exception while predicting description", exc_info=e)
-        time.sleep(2)
-
-    return request
-
-
-async def process_llm_predict(client, requests):
-    tasks = [llm_predict(client, request) for request in requests]
-    processed_requests = await asyncio.gather(*tasks)
-    return processed_requests
+from source.llm import llm_predict, process_llm_predict
 
 
 def _extract_prompt(response):
@@ -68,7 +35,8 @@ class PromptOptimizerHelper(Helper):
         self.params = params
         logging.basicConfig(level=logging.INFO)
         self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
-        self.session = aioboto3.Session()
+        self.base_url = params.llm.server.base_url
+        self.model_name = params.llm.server.model
         self.samples = self._load_samples()
         logging.info(f"Loaded {len(self.samples)} samples")
 
@@ -183,17 +151,18 @@ class PromptOptimizerHelper(Helper):
                         "temperature": self.params.llm.prompt_opt.temperature,
                         "top_p": self.params.llm.prompt_opt.top_p
                     },
-                    "modelId": self.params.llm.prompt_opt.model,
+                    "model": self.model_name,
                     "timeout": self.params.llm.prompt_opt.timeout
                 })
 
             pred_descriptions, true_descriptions = [], []
-            async with self.session.client('bedrock-runtime') as bedrock_client:
+            async with aiohttp.ClientSession() as http_session:
                 with tqdm(total=prompts_requests.qsize(), desc=f"Requesting") as pbar:
                     while not prompts_requests.empty():  # Process the queue in batches until its empty
                         batched_requests = await self._get_batched_requests(prompts_requests)
                         processed_requests = await process_llm_predict(
-                            bedrock_client,
+                            http_session,
+                            self.base_url,
                             batched_requests
                         )
                         num_failures = 0
@@ -233,15 +202,16 @@ class PromptOptimizerHelper(Helper):
                 "top_p": self.params.llm.prompt_opt.top_p,
                 "stop": stopping_criterion
             },
-            "modelId": self.params.llm.prompt_opt.model,
+            "model": self.model_name,
             "timeout": self.params.llm.prompt_opt.timeout,
             "status": ""
         }
 
-        async with self.session.client('bedrock-runtime') as bedrock_client:
+        async with aiohttp.ClientSession() as http_session:
             while prompt_request["status"] != "success":
                 prompt_request = await llm_predict(
-                    bedrock_client,
+                    http_session,
+                    self.base_url,
                     prompt_request
                 )
             return prompt_request["response"] + "</prompt>"

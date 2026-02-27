@@ -54,23 +54,27 @@ prediction:
 llm:
   dir: resource/llm/
 
+  server:
+    base_url: "http://localhost:8001/v1"
+    model: "/home/datalake/models/llama3-8b"
+
   prompt_opt:
     num_targets_labels: ${data.llm.prompt_opt.num_targets_labels}
     num_samples_per_target_label: ${data.llm.prompt_opt.num_samples_per_target_label}
     num_epochs: 3
     batch_size: 32
-    timeout: 16
+    timeout: 60
     max_gen_len: 256
     temperature: 0.5
     top_p: 0.5
-    model: meta.llama3-1-8b-instruct-v1:0 # arn:aws:bedrock:us-west-2:179395270822:inference-profile/us.meta.llama4-scout-17b-instruct-v1:0 #meta.llama4-scout-17b-instruct-v1:0 #meta.llama3-1-8b-instruct-v1:0
+    model: ${llm.server.model}
 
   label_desc:
     batch_size: 32
     max_gen_len: 256
     temperature: 0.6
     top_p: 0.9
-    timeout: 16
+    timeout: 60
     num_samples: 5
     max_samples_per_label: 2
     request_dir: resource/llm/${data.name}/request/

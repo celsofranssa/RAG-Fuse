@@ -1,0 +1,30 @@
+name: DBLP
+dir: resource/dataset/DBLP/
+
+folds: [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ]
+splits: [ "train", "val", "test" ]
+
+
+text_max_length: 256
+label_max_length: 16
+vocabulary_size: 10000
+
+num_labels: 10
+num_texts: 38129
+num_relevant_labels: 1
+
+llm:
+  prompt_opt:
+    num_targets_labels: 4
+    num_samples_per_target_label: 16
+
+batch_size: 64
+num_workers: 12
+
+label_enhancement: LLM
+pseudo_labels: apmi_pseudo_labels
+text_features_source: TXT
+
+propensity:
+  A: 0.55
+  B: 1.5
