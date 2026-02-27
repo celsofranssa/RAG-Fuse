@@ -1,0 +1,20 @@
+Your task is to optimize <prompt>prompt</prompt> such as show below:
+<prompt>
+{description_prompt}
+</prompt>
+
+The prompt template contains template variables 'text_label_pairs' and 'target_label'. Given an input set of template variables, the formatted prompt is then given to an LLM to get an output.
+
+Below are some previous prompts with their scores. The score ranges from -1(worse) to 1(better).
+
+{prompts_scores}
+
+Some examples of template variable inputs and expected outputs are given below to illustrate the task.
+
+{prompt_samples}
+
+We run every input in an evaluation dataset through an LLM. If the LLM-generated output doesn't match the expected output, we mark it as wrong (lower scores).
+A correct answer has a score of 1. The final "score" for a prompt is the average of scores across an evaluation dataset.
+Write your new prompt (<prompt>prompt</prompt> ) that is different from the old ones and has a score as high as possible.
+
+Optimized prompt:

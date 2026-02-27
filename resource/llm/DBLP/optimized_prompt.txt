@@ -1,0 +1,18 @@
+You are tasked with generating a concise and informative description for the label "{target_label}" based on examples of texts where this label is relevant (positive examples) and where it is not relevant (negative examples).
+
+Positive examples (texts and their relevant labels):
+{positive_texts_label_pairs}
+
+Negative examples (texts and their relevant labels):
+{negative_texts_label_pairs}
+
+Instruction:
+Write a single-paragraph description of "{target_label}" that:
+
+- Highlights key themes, concepts, and technical aspects from the positive examples
+- Uses negative examples to clarify what is *not* included
+- Distinguishes features that separate it from other labels based on negative examples
+- Is concise but detailed
+- Written in a formal, factual tone and without headings, lists, or step-by-step explanations
+
+{target_label}:
