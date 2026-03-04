@@ -74,7 +74,7 @@ LLM_DIR = BASE_DIR / "resource" / "llm"
 # ---------------------------------------------------------------------------
 # Token counting
 # ---------------------------------------------------------------------------
-def count_tokens(text: str, model: str = "gpt-4") -> int:
+def count_tokens(text: str, model: str = "gpt-4o") -> int:
     """
     Count tokens in `text` using tiktoken.
     Falls back to a word-based approximation (1 token ≈ 0.75 words) if
@@ -91,7 +91,7 @@ def count_tokens(text: str, model: str = "gpt-4") -> int:
         return int(len(text.split()) / 0.75)
 
 
-def count_chat_tokens(system_msg: str, user_msg: str, model: str = "gpt-4") -> int:
+def count_chat_tokens(system_msg: str, user_msg: str, model: str = "gpt-4o") -> int:
     """
     Estimate total input tokens for a ChatCompletion request with
     one system message and one user message.
@@ -423,7 +423,7 @@ def parse_batch_results(
 # ---------------------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate target_descriptions.pkl for a dataset using GPT-4."
+        description="Generate target_descriptions.pkl for a dataset using GPT-4o."
     )
     parser.add_argument(
         "--dataset",
@@ -446,14 +446,14 @@ def main():
     parser.add_argument(
         "--model",
         type=str,
-        default="gpt-4",
-        help="OpenAI model to use (default: gpt-4). Can also use gpt-4o, gpt-4-turbo, etc.",
+        default="gpt-4o",
+        help="OpenAI model to use (default: gpt-4o). Can also use gpt-4-turbo, etc.",
     )
     parser.add_argument(
         "--temperature",
         type=float,
         default=0.7,
-        help="Sampling temperature for GPT-4 (default: 0.7)",
+        help="Sampling temperature for GPT-4o (default: 0.7)",
     )
     parser.add_argument(
         "--seed",
@@ -464,7 +464,7 @@ def main():
     parser.add_argument(
         "--dry_run",
         action="store_true",
-        help="If set, print prompts without calling GPT-4 (useful for debugging)",
+        help="If set, print prompts without calling GPT-4o (useful for debugging)",
     )
     parser.add_argument(
         "--output",
@@ -681,7 +681,7 @@ def main():
         logger.info(f"Pricing: ${in_price:.2f} / 1M input, ${out_price:.2f} / 1M output")
         if args.model not in MODEL_PRICING:
             logger.warning(
-                f"Model '{args.model}' not in pricing table – using gpt-4 pricing as fallback. "
+                f"Model '{args.model}' not in pricing table – using gpt-4o pricing as fallback. "
                 f"Update MODEL_PRICING dict for accurate estimates."
             )
         logger.info(f"")
