@@ -1,0 +1,6 @@
+python -m vllm.entrypoints.openai.api_server \
+   --model /home/datalake/models/llama3-8b \
+   --host 0.0.0.0 \
+   --port 8001 \
+   --max-model-len 4096 \
+   --gpu-memory-utilization 0.45
