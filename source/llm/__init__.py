@@ -28,16 +28,18 @@ async def llm_predict(session: aiohttp.ClientSession, base_url: str, request: di
     if "stop" in body:
         payload["stop"] = body["stop"]
 
+    async def _do_request():
+        async with session.post(
+            f"{base_url}/completions",
+            json=payload,
+        ) as resp:
+            resp.raise_for_status()
+            data = await resp.json()
+            request["response"] = data["choices"][0]["text"]
+            request["status"] = "success"
+
     try:
-        async with asyncio.timeout(request.get("timeout", 60)):
-            async with session.post(
-                f"{base_url}/completions",
-                json=payload,
-            ) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
-                request["response"] = data["choices"][0]["text"]
-                request["status"] = "success"
+        await asyncio.wait_for(_do_request(), timeout=request.get("timeout", 60))
 
     except asyncio.TimeoutError:
         request["status"] = "failure"
