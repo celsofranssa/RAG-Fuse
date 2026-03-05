@@ -104,7 +104,7 @@ rpr:
   write_interval: batch
 
 eval:
-  metrics: [ "ndcg", "precision" ]
+  metrics: [ "ndcg", "precision", "recall", "f1", "map", "mrr", ndcg", "hit_rate", "r-precision", "bpref" ]
   thresholds: [ 1,5,10 ]
   num_nearest_neighbors: 100
   label_cls: [ "tail", "head" ]
