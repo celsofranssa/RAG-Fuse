@@ -3,7 +3,7 @@ import glob
 
 # 1. Listar todos os arquivos do diretório
 
-dataset = "BOOKS"
+dataset = "TREC"
 caminho_arquivos = f"resource/result/Aggregated_LLM_RetrieverBERT_{dataset}/Aggregated_LLM_RetrieverBERT_{dataset}_*.rts"
 arquivos = glob.glob(caminho_arquivos)
 
